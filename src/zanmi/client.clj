@@ -30,6 +30,48 @@
     (get keymap algorithm)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; user client                                                              ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defprotocol User
+  "Authenticate users"
+  (register! [client username password]
+    "Add a new profile")
+  (authenticate [client username password]
+    "Validate password against an existing profile")
+  (update-password! [client username password new-password]
+    "Update the password of an existing profile")
+  (unregister! [client username password]
+    "Remove an existing profile"))
+
+(defrecord UserClient [url]
+  User
+  (register! [_ username password]
+    (-> (profile-collection-url url)
+        (http/post (with-transit {:form-params {:username username
+                                                :password password}}))
+        (get-in [:body :auth-token])))
+
+  (authenticate [_ username password]
+    (-> (auth-url url username)
+        (http/post (with-transit {:form-params {:password password}}))
+        (get-in [:body :auth-token])))
+
+  (update-password! [_ username password new-password]
+    (-> (profile-url url username)
+        (http/put (with-transit {:form-params {:password password
+                                               :new-password new-password}}))
+        (get-in [:body :auth-token])))
+
+  (unregister! [_ username password]
+    (-> (profile-url url username)
+        (http/delete (with-transit {:form-params {:password password}}))
+        (get-in [:body :message]))))
+
+(defn user-client [{url :url :as config}]
+  (->UserClient url))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; application client                                                       ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
