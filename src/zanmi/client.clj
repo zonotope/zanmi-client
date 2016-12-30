@@ -8,9 +8,13 @@
 ;; request utilities                                                        ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn- with-transit [opts]
+(defn- with-transit [& [{:as opts}]]
   (merge {:content-type :transit+json, :accept :transit+json, :as :transit+json}
          opts))
+
+(defn- with-auth
+  ([username password] {:basic-auth [username password]})
+  ([opts username password] (merge opts (with-auth username password))))
 
 (defn- profile-collection-url [zanmi-url]
   (str zanmi-url "/profiles"))
@@ -23,6 +27,10 @@
 
 (defn- reset-url [zanmi-url username]
   (str (profile-url zanmi-url username) "/reset"))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; algorithm mapping                                                        ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn- alg-key [algorithm]
   (let [keymap {:ecdsa256 :es256, :ecdsa512 :es512, :rsa-pss256 :ps256,
@@ -44,29 +52,39 @@
   (unregister! [client username password]
     "Remove an existing profile"))
 
-(defrecord UserClient [url]
+(defrecord UserClient [base-url]
   User
   (register! [_ username password]
-    (-> (profile-collection-url url)
+    (-> base-url
+        (profile-collection-url)
         (http/post (with-transit {:form-params {:username username
                                                 :password password}}))
         (get-in [:body :auth-token])))
 
   (authenticate [_ username password]
-    (-> (auth-url url username)
-        (http/post (with-transit {:form-params {:password password}}))
-        (get-in [:body :auth-token])))
+    (let [opts (-> (with-transit)
+                   (with-auth username password))]
+      (-> base-url
+          (auth-url username)
+          (http/post opts)
+          (get-in [:body :auth-token]))))
 
   (update-password! [_ username password new-password]
-    (-> (profile-url url username)
-        (http/put (with-transit {:form-params {:password password
-                                               :new-password new-password}}))
-        (get-in [:body :auth-token])))
+    (let [opts (-> {:form-params {:new-password new-password}}
+                   (with-transit)
+                   (with-auth username password))]
+      (-> base-url
+          (profile-url username)
+          (http/put opts)
+          (get-in [:body :auth-token]))))
 
   (unregister! [_ username password]
-    (-> (profile-url url username)
-        (http/delete (with-transit {:form-params {:password password}}))
-        (get-in [:body :message]))))
+    (let [opts (-> (with-transit)
+                   (with-auth username password))]
+      (-> base-url
+          (profile-url username)
+          (http/delete opts)
+          (get-in [:body :message])))))
 
 (defn user-client [{url :url :as config}]
   (->UserClient url))
