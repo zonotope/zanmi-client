@@ -33,16 +33,42 @@ get auth tokens, update passwords, and delete profiles.
 
 ;; update the users password. this function returns a new auth token if all is
 ;; well
-(zanmi/update-password! user-client "gwcarver" "pulverized peanuts" "succulent sweet potatos")
+(zanmi/update-password! user-client "gwcarver" "pulverized peanuts" "succulent sweet potatoes")
 
 ;; delete the user's profile from the server
-(zanmi/unregister! user-client "gwcarver" "pulverized peanuts")
+(zanmi/unregister! user-client "gwcarver" "succulent sweet potatoes")
 ```
 
 If any of the credentials are incorrect or validations fail, the functions will
 thow an exception with the http response code sent by the zanmi server.
 
 #### Application Client
+Use an application client to integrate an application with zanmi. The
+application client allows applications to get new password reset tokens for
+users as well validate authentication tokens passed into the application from
+user requests.
+
+```clojure
+;; get a new application client with the zanmi token signing algorithm, api key,
+;; public key path, and url
+
+(def app-client
+  (let [zanmi-app-client-config {:algorithm :rsa-pss512
+                               :api-key "some long string"
+                               :public-key-path "/path/to/zanmi-public-key"
+                               :url "http://<zanmi host>:<zanmi port>"}]
+    (zanmi/application-client zanmi-app-client-config)))
+
+;; use `read-token` to unsign and verify that an auth token is valid and not
+;; expired.
+(zanmi/read-token app-client "user auth token string")
+
+;; use `get-reset-token` to get a password reset token for if a user has
+;; forgotten their password. send this token to the user's email address, and
+;; valid reset tokens allow them to reset their passwords without entering the
+;; old one.
+(zanmi/get-reset-token app-client "gwcarver")
+```
 
 ## License
 
