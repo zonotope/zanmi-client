@@ -49,6 +49,8 @@
     "Validate password against an existing profile")
   (update-password! [client username password new-password]
     "Update the password of an existing profile")
+  (reset-password! [client username reset-token new-password]
+    "Reset the password of an existing profile")
   (unregister! [client username password]
     "Remove an existing profile"))
 
@@ -73,6 +75,15 @@
     (let [opts (-> {:form-params {:new-password new-password}}
                    (with-transit)
                    (with-auth username password))]
+      (-> base-url
+          (profile-url username)
+          (http/put opts)
+          (get-in [:body :auth-token]))))
+
+  (reset-password! [_ username reset-token new-password]
+    (let [opts (-> {:form-params {:reset-token reset-token
+                                  :new-password new-password}}
+                   (with-transit))]
       (-> base-url
           (profile-url username)
           (http/put opts)

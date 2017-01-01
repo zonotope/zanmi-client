@@ -35,6 +35,10 @@ get auth tokens, update passwords, and delete profiles.
 ;; well
 (zanmi/update-password! user-client "gwcarver" "pulverized peanuts" "succulent sweet potatoes")
 
+;; reset the user's password with a valid reset token (more on that below) using
+;; the `reset-password!` function
+(zanmi/reset-password! user-client "gwcarver" "<reset token>" "succulent sweet potatoes")
+
 ;; delete the user's profile from the server
 (zanmi/unregister! user-client "gwcarver" "succulent sweet potatoes")
 ```
