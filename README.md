@@ -1,6 +1,7 @@
 # zanmi-client
+[![Clojars Project](https://img.shields.io/clojars/v/zanmi-client.svg)](https://clojars.org/zanmi-client)
 
-A Clojure library designed to ... well, that part is up to you.
+Clojure [zanmi](https://github.com/zonotope/zanmi) client.
 
 ## Usage
 
@@ -8,5 +9,4 @@ A Clojure library designed to ... well, that part is up to you.
 
 Copyright © 2016 ben lamothe
 
-Distributed under the Eclipse Public License either version 1.0 or (at
-your option) any later version.
+Distributed under the MIT License

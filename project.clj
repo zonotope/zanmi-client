@@ -8,5 +8,4 @@
                  [clj-http "2.2.0"]
                  [com.cognitect/transit-clj "0.8.288"]]
 
-  :license {:name "Eclipse Public License"
-            :url "http://www.eclipse.org/legal/epl-v10.html"})
+  :license {:name "MIT License"})
