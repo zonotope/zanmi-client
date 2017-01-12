@@ -57,11 +57,11 @@
 (defrecord UserClient [base-url]
   User
   (register! [_ username password]
-    (-> base-url
-        (profile-collection-url)
-        (http/post (with-transit {:form-params {:username username
-                                                :password password}}))
-        (get-in [:body :auth-token])))
+    (let [attrs {:username username, :password password}]
+      (-> base-url
+          (profile-collection-url)
+          (http/post (with-transit {:form-params {:profile attrs}}))
+          (get-in [:body :auth-token]))))
 
   (authenticate [_ username password]
     (let [opts (-> (with-transit)
@@ -72,7 +72,8 @@
           (get-in [:body :auth-token]))))
 
   (update-password! [_ username password new-password]
-    (let [opts (-> {:form-params {:new-password new-password}}
+    (let [attr {:password new-password}
+          opts (-> {:form-params {:profile attr}}
                    (with-transit)
                    (with-auth username password))]
       (-> base-url
@@ -81,8 +82,9 @@
           (get-in [:body :auth-token]))))
 
   (reset-password! [_ username reset-token new-password]
-    (let [opts (-> {:form-params {:reset-token reset-token
-                                  :new-password new-password}}
+    (let [attr {:password new-password}
+          opts (-> {:form-params {:reset-token reset-token
+                                  :profile attr}}
                    (with-transit))]
       (-> base-url
           (profile-url username)
