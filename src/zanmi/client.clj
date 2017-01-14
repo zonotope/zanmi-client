@@ -29,15 +29,6 @@
   (str (profile-url zanmi-url username) "/reset"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; algorithm mapping                                                        ;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(defn- alg-key [algorithm]
-  (let [keymap {:ecdsa256 :es256, :ecdsa512 :es512, :rsa-pss256 :ps256,
-                :rsa-pss512 :ps512, :sha512 :hs512}]
-    (get keymap algorithm)))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; user client                                                              ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -116,7 +107,7 @@
 (defrecord ApplicationClient [algorithm api-key url verification-key]
   Application
   (read-token [_ token]
-    (jwt/unsign token verification-key {:alg (alg-key algorithm)}))
+    (jwt/unsign token verification-key {:alg algorithm}))
 
   (get-reset-token [_ username]
     (let [signed (jwt/sign {:username username} api-key {:alg :hs512})]
