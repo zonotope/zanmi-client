@@ -112,7 +112,7 @@
   (get-reset-token [_ username]
     (let [signed (jwt/sign {:username username} api-key {:alg :hs512})]
       (-> (reset-url url username)
-          (http/post (with-transit {:form-params {:request-token signed}}))
+          (http/post (with-transit {:form-params {:app-token signed}}))
           (get-in [:body :reset-token])))))
 
 (defn application-client [{:keys [algorithm api-key public-key-path url]
