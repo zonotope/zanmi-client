@@ -1,4 +1,4 @@
-(ns zanmi.client.util.url)
+(ns zanmi.client.url)
 
 (defn profile-collection [base]
   (str base "/profiles"))
