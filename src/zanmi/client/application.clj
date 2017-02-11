@@ -1,48 +1,21 @@
 (ns zanmi.client.application
-  (:require [zanmi.client.util.request :refer [request with-token-auth]]
-            [zanmi.client.util.url :as url]
+  (:require [zanmi.client.request :refer [parse-response post]]
+            [zanmi.client.url :as url]
             [buddy.core.keys :as keys]
-            [buddy.sign.jwt :as jwt]
-            [clj-http.client :as http]))
+            [buddy.sign.jwt :as jwt]))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; request utils                                                            ;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn get-reset-token [{:keys [api-key host-url] :as client} username]
+  (let [app-token (jwt/sign {:username username} api-key {:alg :hs512})]
+    (-> {:app-auth app-token}
+        (post (url/reset host-url username))
+        (parse-response :reset-token))))
 
-(defn- with-app-auth [req token]
-  (with-token-auth req token "ZanmiAppToken"))
+(defn read-auth-token [{:keys [algorithm public-key] :as client} token]
+  (jwt/unsign token public-key {:alg algorithm}))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; client protocol                                                          ;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(defprotocol Application
-  "Manage user profiles"
-  (read-token [client token]
-    "Unsign the token and verify the signature")
-  (get-reset-token [client username]
-    "Get a reset token for an existing profile"))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; application client                                                       ;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(defrecord ApplicationClient [algorithm api-key base-url public-key]
-  Application
-  (read-token [_ token]
-    (jwt/unsign token public-key {:alg algorithm}))
-
-  (get-reset-token [_ username]
-    (let [app-token (jwt/sign {:username username} api-key {:alg :hs512})]
-      (-> (url/reset base-url username)
-          (http/post (-> (request)
-                         (with-app-auth app-token)))
-          (get-in [:body :reset-token])))))
-
-(defn application-client [{:keys [algorithm api-key public-key-path url]
+(defn application-client [{:keys [algorithm api-key public-key-path host-url]
                            :as config}]
   (let [pubkey (keys/public-key (:public-key-path config))]
     (-> config
-        (dissoc :public-key-path :url)
-        (assoc :public-key pubkey, :base-url url)
-        (map->ApplicationClient))))
+        (dissoc :public-key-path)
+        (assoc :public-key pubkey))))
