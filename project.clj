@@ -9,4 +9,6 @@
                  [cljs-http "0.1.42"]
                  [com.cognitect/transit-clj "0.8.288"]]
 
+  :profiles {:dev {:source-paths ["dev"]}}
+
   :license {:name "MIT License"})
