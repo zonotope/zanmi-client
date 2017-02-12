@@ -38,8 +38,9 @@
   (if params
     (-> opts
         (dissoc :params)
-        #?(:clj  (assoc :form-params params)
-           :cljs (assoc :transit-params params)))
+        #?@(:clj  ((assoc :form-params params))
+            :cljs ((assoc :transit-params params)
+                   (assoc :with-credentials? false))))
     opts))
 
 (defn- wrap-transit-params [opts]
