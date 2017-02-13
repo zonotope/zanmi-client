@@ -13,6 +13,10 @@
 (defn read-auth-token [{:keys [algorithm public-key] :as client} token]
   (jwt/unsign token public-key {:alg algorithm}))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; client                                                                   ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (defrecord ApplicationClient [algorithm api-key public-key host-url])
 
 (defn application-client [{:keys [algorithm api-key public-key-path host-url]
